@@ -69,30 +69,29 @@ def plot_histogram(image):
     return plt
 
 # Interface Streamlit
-st.title("🔍 Application de Traitement et Comparaison d'Images")
+st.title("🔍 Application de Traitement d'Images")
 
-st.sidebar.header("📂 Importer des images")
-uploaded_file1 = st.sidebar.file_uploader("Choisir la première image", type=["jpg", "png", "jpeg"])
-uploaded_file2 = st.sidebar.file_uploader("Choisir la deuxième image (optionnel)", type=["jpg", "png", "jpeg"])
+st.sidebar.header("📂 Importer une image")
+uploaded_file = st.sidebar.file_uploader("Choisir une image", type=["jpg", "png", "jpeg"])
 
-if uploaded_file1:
-    # Charger la première image
-    image1 = np.array(Image.open(uploaded_file1))
-    st.subheader("Image 1 chargée")
-    st.image(image1, caption="Image 1", use_column_width=True)
+if uploaded_file:
+    # Charger l'image
+    image = np.array(Image.open(uploaded_file))
+    st.subheader("Image chargée")
+    st.image(image, caption="Image originale", use_column_width=True)
 
     # Menu pour choisir la fonctionnalité
     st.sidebar.header("🎛️ Fonctionnalités")
     feature = st.sidebar.selectbox(
         "Choisir une fonctionnalité",
-        ("Ajouter du texte", "Appliquer un filtre", "Analyser l'histogramme", "Comparaison d'images (SSIM/ORB)")
+        ("Ajouter du texte", "Appliquer un filtre", "Analyser l'histogramme")
     )
 
     if feature == "Ajouter du texte":
         st.subheader("Ajouter du texte à l'image")
         text = st.text_input("Entrez le texte à ajouter", "Hello World")
-        position_x = st.slider("Position X", 0, image1.shape[1], 50)
-        position_y = st.slider("Position Y", 0, image1.shape[0], 50)
+        position_x = st.slider("Position X", 0, image.shape[1], 50)
+        position_y = st.slider("Position Y", 0, image.shape[0], 50)
         font_scale = st.slider("Taille de la police", 0.5, 5.0, 1.0)
         color = st.color_picker("Couleur du texte", "#FFFFFF")
         thickness = st.slider("Épaisseur du texte", 1, 10, 2)
@@ -100,7 +99,7 @@ if uploaded_file1:
         # Convertir la couleur hexadécimale en BGR
         color_bgr = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (4, 2, 0))
         
-        image_with_text = add_text_to_image(image1, text, (position_x, position_y), font_scale, color_bgr, thickness)
+        image_with_text = add_text_to_image(image, text, (position_x, position_y), font_scale, color_bgr, thickness)
         st.image(image_with_text, caption="Image avec texte", use_column_width=True)
 
     elif feature == "Appliquer un filtre":
@@ -109,48 +108,13 @@ if uploaded_file1:
             "Choisir un filtre",
             ("Flou gaussien", "Détection de contours (Canny)", "Seuillage (Thresholding)")
         )
-        filtered_image = apply_filter(image1, filter_type)
+        filtered_image = apply_filter(image, filter_type)
         st.image(filtered_image, caption=f"Filtre appliqué : {filter_type}", use_column_width=True)
 
     elif feature == "Analyser l'histogramme":
         st.subheader("Analyse de l'histogramme des couleurs")
-        histogram_plot = plot_histogram(image1)
+        histogram_plot = plot_histogram(image)
         st.pyplot(histogram_plot)
 
-    elif feature == "Comparaison d'images (SSIM/ORB)":
-        if uploaded_file2:
-            # Charger la deuxième image
-            image2 = np.array(Image.open(uploaded_file2))
-            st.subheader("Image 2 chargée")
-            st.image(image2, caption="Image 2", use_column_width=True)
-
-            # Choix de la méthode de comparaison
-            method = st.sidebar.radio("Méthode de comparaison", ("SSIM", "ORB"))
-
-            if method == "SSIM":
-                st.subheader("Résultat de la comparaison SSIM")
-                st.markdown("""
-                **Qu'est-ce que SSIM ?**  
-                L'indice de similarité structurelle (SSIM) compare deux images en mesurant leur similarité en termes de luminance, contraste et structure.  
-                - **Score SSIM** : Un score proche de 1 indique une forte similarité, tandis qu'un score proche de 0 indique une faible similarité.  
-                - **Carte des différences** : La carte montre les zones où les images diffèrent (plus claires = différences plus importantes).
-                """)
-                score, fig = compare_ssim(image1, image2)
-                st.write(f"**Indice de similarité SSIM :** {score:.4f}")
-                st.pyplot(fig)
-            else:
-                st.subheader("Résultat de la comparaison ORB")
-                st.markdown("""
-                **Qu'est-ce que ORB ?**  
-                ORB (Oriented FAST and Rotated BRIEF) est un algorithme de détection de points clés et de descripteurs. Il est utilisé pour trouver des correspondances entre les images.  
-                - **Nombre de correspondances** : Plus le nombre de correspondances est élevé, plus les images sont similaires.  
-                - **Visualisation** : Les lignes relient les points clés correspondants entre les deux images.
-                """)
-                num_matches, fig = compare_orb(image1, image2)
-                st.write(f"**Nombre de correspondances détectées :** {num_matches}")
-                st.pyplot(fig)
-        else:
-            st.warning("Veuillez charger une deuxième image pour effectuer la comparaison.")
-
 else:
-    st.info("Veuillez charger au moins une image pour commencer.")
+    st.info("Veuillez charger une image pour commencer.")
